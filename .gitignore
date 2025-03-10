@@ -1,0 +1,33 @@
+# Ignore build and temporary files
+*.obj
+*.exe
+*.pdb
+*.idb
+*.ipch
+*.ilk
+*.sdf
+*.suo
+*.ncb
+*.user
+*.tlog
+*.log
+*.cache
+*.vs/
+Debug/
+Release/
+x64/
+x86/
+ARM/
+CMakeCache.txt
+CMakeFiles/
+CMakeLists.txt.user
+
+# Ignore Visual Studio backup files
+*.VC.db
+*.VC.opendb
+
+# Ignore FreeRTOS build files
+*.out
+*.map
+*.lst
+*.d
