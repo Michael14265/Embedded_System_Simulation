@@ -145,6 +145,13 @@
 /* Scalers for FreeRTOS Simulation */
 #define X_SIMULATION_SCALER 1
 
+/* Color values for display */
+#define BLACK 0x0000
+#define BLUE 0x0001
+#define GREEN 0x0002
+#define RED 0x0004
+
+
 /* Static Data */
 
 /* Data for displaying and getting buttons */
@@ -152,11 +159,11 @@
 #define BUTTON_COLUMNS          3
 
 // Declares arrays of buttons
-/*static char* p_chButtonText[BUTTON_ROWS][BUTTON_COLUMNS] =
+static char* p_chButtonText[BUTTON_ROWS][BUTTON_COLUMNS] =
 {
-    (" PRT ", " 1 ", " TIME "),
-    (" HST ", " 2 ", NULLP),
-    (" ALL ", " 3 ", " RST ")
+    {" PRT ", " 1 ", " TIME "},
+    {" HST ", " 2 ", NULL},
+    {" ALL ", " 3 ", " RST "}
 };
 
 static char a_chButtonKey[BUTTON_ROWS][BUTTON_COLUMNS] =
@@ -164,7 +171,10 @@ static char a_chButtonKey[BUTTON_ROWS][BUTTON_COLUMNS] =
     {'P', '1', 'T'},
     {'H', '2', '\x00'},
     {'A', '3', 'R'}
-};*/
+};
+
+/* Console handle for global use in display */
+static HANDLE hConsole;
 
 /* Button the user pressed. */
 static WORD wButton;
@@ -206,9 +216,10 @@ static SemaphoreHandle_t xWinSem;
 
 /* Static Functions */
 static void vUtilityDrawBox(int ixNW, int iyNW, int iXSize, int iYSize);
-//static void vUtilityDisplayFloatLevels(void);
+static void vUtilityDisplayFloatLevels(void);
 //static void vUtilityPrinterDisplay(void);
 static void gotoxy(int x, int y);
+static void setTextBackgroundColor(int bgColor);
 
 /*-----------------------------------------------------------*/
 
@@ -222,6 +233,7 @@ void dbgmain(void)
     vTaskStartScheduler();
 
 
+
     for (;; );
 }
 
@@ -229,13 +241,130 @@ void vHardwareInit(void) {
     int iColumn, iRow; /* Iterators */
     BYTE byErr; /* May not be necessary, used in micro c semaphore pending function*/
 
-    /* Start the debugging tasks */
-    xTaskCreate(vDebugTimerTask,"dbtimer", configMINIMAL_STACK_SIZE,NULL,TASK_PRIORITY_DEBUG_TIMER,NULL);
+    printf("\r\nHardware Init Function Entered\r\n");
+
+    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
     xWinSem = xSemaphoreCreateBinary();
 
     configASSERT(xWinSem != NULL);
 
+    /* Start the debugging tasks */
+    xTaskCreate(vDebugTimerTask, "dbtimer", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY_DEBUG_TIMER, NULL);
+
+    system("cls");
+
+    /* Divide the screen */
+    for (iRow = 1; iRow <= 25; ++iRow) // iterates through # rows
+    {
+        gotoxy(DBG_SCRN_DIV_X, iRow);
+        // DBG_SCRN_DIV_X == x, iRow == y
+        printf("%c", LINE_VERT); // Prints a '|' at each location
+    }
+    /* Set up the debug side of the screen */
+    gotoxy(7, 2);
+    printf(" D E B U G ");
+
+    gotoxy(1, 4);
+    printf("These keys press buttons:");
+
+    gotoxy(1, 5);
+    printf(" P  1  T");
+
+    gotoxy(1, 6);
+    printf(" H  2");
+
+    /* More UI setup */
+    gotoxy(1, 7);
+    printf(" A  3  R");
+
+    gotoxy(1, 9);
+    printf("Press 'X' to exit the program");
+
+    gotoxy(1, 10);
+    printf("-------------------------");
+
+    gotoxy(1, DBG_SCRN_TIME_ROW - 1);
+    printf("TIME:");
+
+    gotoxy(1, DBG_SCRN_TIME_ROW);
+    printf(" '1' to make 1/3 second pass");
+
+    gotoxy(1, DBG_SCRN_TIME_ROW + 1);
+    printf(" 'O' to toggle auto timer");
+
+    gotoxy(1, DBG_SCRN_TIME_ROW + 3);
+    printf("Auto-time is:");
+
+    gotoxy(15, DBG_SCRN_TIME_ROW + 3);
+    setTextBackgroundColor(RED); // Borland C compiler function, sets background color of subsequently printed text
+    // i.e OFF button will now have a red background
+    printf(" OFF ");
+    setTextBackgroundColor(BLACK); // Resets background color to black
+
+    gotoxy(1, DBG_SCRN_TIME_ROW + 4);
+    printf("-------------------------");
+
+    /* Display the current tank levels */
+    gotoxy(1, DBG_SCRN_FLOAT_ROW - 4);
+    printf("FLOATS:");
+
+    gotoxy(1, DBG_SCRN_FLOAT_ROW - 3);
+    printf(" '<' and '>' to select float");
+
+    gotoxy(1, DBG_SCRN_FLOAT_ROW - 2);
+    printf(" '+' and '-' to change level");
+
+    gotoxy(1, DBG_SCRN_FLOAT_ROW);
+    printf("Tank:");
+
+    gotoxy(1, DBG_SCRN_FLOAT_ROW + 2);
+    printf("Level");
+
+    vUtilityDisplayFloatLevels();
+
+    /* Start with the buttons */
+    setTextBackgroundColor(DBG_SCRN_BTN_COLOR);
+    for (iRow = 0; iRow < BUTTON_ROWS; ++iRow)
+        for (iColumn = 0; iColumn < BUTTON_COLUMNS; ++iColumn)
+        {
+            if (p_chButtonText[iRow][iColumn] != NULL)
+            {
+                gotoxy(DBG_SCRN_BTN_X + iColumn * DBG_SCRN_BTN_WIDTH,
+                    DBG_SCRN_BTN_Y + iRow * DBG_SCRN_BTN_HEIGHT);
+                cprintf("%s", p_chButtonText[iRow][iColumn]);
+            }
+        }
+    setTextBackgroundColor(BLACK);
+
+    /* Set up the system side of the screen */
+    gotoxy(DBG_SCRN_DIV_X + 14, 2);
+    printf(" S Y S T E M ");
+
+    /* Draw the display */
+    vUtilityDrawBox(DBG_SCRN_DISP_X, DBG_SCRN_DISP_Y,
+        DBG_SCRN_DISP_WIDTH, 1);
+
+    /* Draw the printer */
+    vUtilityDrawBox(DBG_SCRN_PRNTR_X, DBG_SCRN_PRNTR_Y,
+        DBG_SCRN_PRNTR_WIDTH, DBG_SCRN_PRNTR_HEIGHT);
+    vUtilityDrawBox(DBG_SCRN_PRNTR_X,
+        DBG_SCRN_PRNTR_Y + DBG_SCRN_PRNTR_HEIGHT + 1,
+        DBG_SCRN_PRNTR_WIDTH, 1);
+    gotoxy(DBG_SCRN_PRNTR_X + 1,
+        DBG_SCRN_PRNTR_Y + DBG_SCRN_PRNTR_HEIGHT + 2);
+    printf(" ^^ PRINTER ^^ ");
+
+    /* Initialize printer lines */
+    for (iRow = 0; iRow < DBG_SCRN_PRNTR_HEIGHT; ++iRow)
+        strcpy(aa_charPrinted[iRow], "");
+
+    /* Draw the bell */
+    vUtilityDrawBox(DBG_SCRN_BELL_X, DBG_SCRN_BELL_Y,
+        DBG_SCRN_BELL_WIDTH,
+        DBG_SCRN_BELL_HEIGHT);
+    gotoxy(DBG_SCRN_BELL_X + 1, DBG_SCRN_BELL_Y + 2);
+    printf(" BELL ");
 
 
 }
@@ -257,9 +386,9 @@ static void vDebugTimerTask(void* pvParameters){
     (void)pvParameters;
 
     for (;;) {
-        taskENTER_CRITICAL();
+        /*taskENTER_CRITICAL();
         printf("vDebugTimerTask\r\n");
-        taskEXIT_CRITICAL();
+        taskEXIT_CRITICAL();*/
         vTaskDelay(1000);
     }
 
@@ -310,9 +439,40 @@ static void vUtilityDrawBox(/*INPUTS:*/
     printf("%c", LINE_CORNER_SE);
 }
 
+static void vUtilityDisplayFloatLevels(void) {
+    /* LOCAL VARIABLES: */
+    int iTank;  /* Iterator. */
+
+    /*-------------------------------------------------------*/
+
+    for (iTank = 0; iTank < COUNTOF_TANKS; ++iTank)
+    {
+        if (iTank == iTankChanging)
+            setTextBackgroundColor(BLUE);
+        gotoxy(iTank * 8 + 10, DBG_SCRN_FLOAT_ROW);
+        printf(" %4d ", iTank + 1);
+        gotoxy(iTank * 8 + 10, DBG_SCRN_FLOAT_ROW + 1);
+        printf(" ---- ");
+        gotoxy(iTank * 8 + 10, DBG_SCRN_FLOAT_ROW + 2);
+        printf(" %4d ", a_iTankLevels[iTank]);
+        setTextBackgroundColor(BLACK);
+    }
+}
+
 static void gotoxy(int x, int y) {
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD pos = { x, y};
     SetConsoleCursorPosition(hConsole, pos);
+}
+
+static void setTextBackgroundColor(int bgColor) {
+    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+
+    // Get current console attributes (including text color)
+    GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
+    WORD currentAttributes = consoleInfo.wAttributes;
+
+    // Mask out the old background color and apply the new one
+    WORD newAttributes = (currentAttributes & 0x0F) | (bgColor << 4);
+    SetConsoleTextAttribute(hConsole, newAttributes);
 }
 
