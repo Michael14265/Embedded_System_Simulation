@@ -369,13 +369,55 @@ void vHardwareInit(void) {
 
 }
 
+/* Called from prvKeyboardInterruptSimulatorTask(), which is defined in main.c. */
+void vSimulationKeyboardInterruptHandler(int xKeyPressed)
+{
+    /* Handle keyboard input. */
+    switch (xKeyPressed)
+    {
+    case 'a':
+
+        taskENTER_CRITICAL();
+        {
+            printf("\r\na was entered\r\n");
+        }
+        taskEXIT_CRITICAL();
+
+        break;
+
+    default:
+        taskENTER_CRITICAL();
+        {
+            printf("\r\nSomething Else\r\n");
+        }
+        taskEXIT_CRITICAL();
+        break;
+    }
+}
+
 static void vDebugKeyTask(void* pvParameters){
 
     /* Prevent the compiler warning about the unused parameter. */
     (void)pvParameters;
 
     for (;;) {
-        
+        vTaskDelay(100); // Adjust value later, shouldn't have to be super low since handling keypress elsewhere
+        /* Are we printing a line? */
+        // Checks global variable iPrinting, which checks if the printer is currently in use. Decrements by 1
+        // and when 0 is reached, vPrinterInterrupt is called
+        if (iPrinting)
+        {
+            /* Yes. */
+            --iPrinting;
+            if (iPrinting == 0)
+            {
+                /* We have finished. Call the interrupt routine. */
+                //vPrinterInterrupt(); Implement Later
+            }
+        }
+        // Rest of this function is for the pre-keypress code, implement later, since I'd like to use some keypresses to
+        // test basic functionality first
+
     }
 
 }

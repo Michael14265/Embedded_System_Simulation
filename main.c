@@ -490,7 +490,8 @@ static uint32_t prvKeyboardInterruptHandler(void)
         #if ( mainCREATE_SIMPLE_BLINKY_DEMO_ONLY == 1 )
             {
                 /* Call the keyboard interrupt handler for the blinky demo. */
-                vBlinkyKeyboardInterruptHandler( xKeyPressed );
+                //vBlinkyKeyboardInterruptHandler( xKeyPressed );
+                vSimulationKeyboardInterruptHandler(xKeyPressed);
             }
         #endif
     break;
