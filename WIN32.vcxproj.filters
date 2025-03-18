@@ -175,6 +175,9 @@
     <ClCompile Include="button.c">
       <Filter>Demo App Source\ExSystem</Filter>
     </ClCompile>
+    <ClCompile Include="timer.c">
+      <Filter>Demo App Source\ExSystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FreeRTOSConfig.h">

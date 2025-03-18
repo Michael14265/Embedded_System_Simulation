@@ -85,6 +85,7 @@
 #include <stdio.h>
 #include <conio.h>
 #include <Windows.h>
+#include <assert.h>
 
 /* Kernel includes. */
 #include "FreeRTOS.h"
@@ -231,8 +232,6 @@ void dbgmain(void)
 
     vTaskStartScheduler();
 
-
-
     for (;; );
 }
 
@@ -376,14 +375,12 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
     /* Handle keyboard input. */
     switch (xKeyPressed)
     {
-    case 'a':
-
-        vButtonInterrupt();
-
+    case '1':
         break;
 
     default:
-        
+        wButton = toupper(xKeyPressed);
+        vButtonInterrupt();
         break;
     }
 }
@@ -492,6 +489,22 @@ static void vUtilityDisplayFloatLevels(void) {
         printf(" %4d ", a_iTankLevels[iTank]);
         setTextBackgroundColor(BLACK);
     }
+}
+
+void vHardwareDisplayLine(char* a_chDisp) {
+
+    assert(strlen(a_chDisp) <= DBG_SCRN_DISP_WIDTH);
+
+    //xSemaphoreTake(xWinSem, portMAX_DELAY);
+    gotoxy(DBG_SCRN_DISP_X + 1, DBG_SCRN_DISP_Y + 1);
+    printf(" ");
+    gotoxy(DBG_SCRN_DISP_X + 1, DBG_SCRN_DISP_Y + 1);
+    printf("%s", a_chDisp);
+    //xSemaphoreGive(xWinSem, portMAX_DELAY);
+}
+
+WORD wHardwareButtonFetch(void) {
+    return (toupper(wButton));
 }
 
 static void gotoxy(int x, int y) {

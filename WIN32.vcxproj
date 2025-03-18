@@ -132,6 +132,7 @@
     <ClCompile Include="main_full.c" />
     <ClCompile Include="print.c" />
     <ClCompile Include="Run-time-stats-utils.c" />
+    <ClCompile Include="timer.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\FreeRTOS-Plus\Source\FreeRTOS-Plus-Trace\Include\trcKernelPort.h" />

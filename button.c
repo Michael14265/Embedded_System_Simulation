@@ -21,56 +21,46 @@ enum CMD_STATE
 
 #define Q_SIZE 10
 
-//QueueHandle_t buttonQueue;
+QueueHandle_t buttonQueue;
 
 static void vButtonTask(void* pvParameters);
 
 void vButtonSystemInit(void) {
-    //xQueueCreate(Q_SIZE, sizeof(WORD));
+    buttonQueue = xQueueCreate(Q_SIZE, sizeof(WORD));
 
-    /*if (xTaskCreate(vButtonTask, "buttontask", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY_BUTTON, NULL) != pdPASS) {
-        printf("Task Creation Failed\r\n");
-    }*/
     xTaskCreate(vButtonTask, "btn", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY_BUTTON, NULL);
 
 }
 
 static void vButtonTask(void* pvParameters) {
     
-    //WORD wMsg;
+    WORD wMsg;
     
     /* Prevent the compiler warning about the unused parameter. */
     (void)pvParameters;
 
     for (;;) {
-        /*xQueueReceive(buttonQueue, &wMsg, portMAX_DELAY);
+        xQueueReceive(buttonQueue, &wMsg, portMAX_DELAY);
         switch (wMsg)
         {
-        case 'a':
-
-            taskENTER_CRITICAL();
-            {
-                printf("\r\na was entered (from button task)\r\n");
-            }
-            taskEXIT_CRITICAL();
-
-            break;
 
         default:
             taskENTER_CRITICAL();
             {
-                printf("\r\nSomething Else (from button task)\r\n");
+                printf("\r\nCharacter Entered: %c\r\n", wMsg);
             }
             taskEXIT_CRITICAL();
             break;
-        }*/
+        }
     }
 }
 
 void vButtonInterrupt(void) {
-    WORD wButton = 'a';
+    WORD wButton;
 
-    //xQueueSendToBackFromISR(buttonQueue, &wButton, pdFALSE);
+    wButton = wHardwareButtonFetch();
+
+    xQueueSendToBackFromISR(buttonQueue, &wButton, pdFALSE);
 
 }
 
