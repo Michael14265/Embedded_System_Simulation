@@ -223,11 +223,10 @@ static void setTextBackgroundColor(int bgColor);
 
 /*-----------------------------------------------------------*/
 
-/*** SEE THE COMMENTS AT THE TOP OF THIS FILE ***/
 void dbgmain(void)
 {
-    vUtilityDrawBox(5, 5, 10, 10);
 
+    vButtonSystemInit();
     vHardwareInit();
 
     vTaskStartScheduler();
@@ -236,6 +235,8 @@ void dbgmain(void)
 
     for (;; );
 }
+
+
 
 void vHardwareInit(void) {
     int iColumn, iRow; /* Iterators */
@@ -332,7 +333,7 @@ void vHardwareInit(void) {
             {
                 gotoxy(DBG_SCRN_BTN_X + iColumn * DBG_SCRN_BTN_WIDTH,
                     DBG_SCRN_BTN_Y + iRow * DBG_SCRN_BTN_HEIGHT);
-                cprintf("%s", p_chButtonText[iRow][iColumn]);
+                printf("%s", p_chButtonText[iRow][iColumn]);
             }
         }
     setTextBackgroundColor(BLACK);
@@ -377,20 +378,12 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
     {
     case 'a':
 
-        taskENTER_CRITICAL();
-        {
-            printf("\r\na was entered\r\n");
-        }
-        taskEXIT_CRITICAL();
+        vButtonInterrupt();
 
         break;
 
     default:
-        taskENTER_CRITICAL();
-        {
-            printf("\r\nSomething Else\r\n");
-        }
-        taskEXIT_CRITICAL();
+        
         break;
     }
 }

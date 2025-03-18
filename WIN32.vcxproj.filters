@@ -169,6 +169,12 @@
     <ClCompile Include="dbgmain.c">
       <Filter>Demo App Source\ExSystem</Filter>
     </ClCompile>
+    <ClCompile Include="print.c">
+      <Filter>Demo App Source\ExSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="button.c">
+      <Filter>Demo App Source\ExSystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FreeRTOSConfig.h">

@@ -106,6 +106,7 @@
     <ClCompile Include="..\Common\Minimal\TaskNotify.c" />
     <ClCompile Include="..\Common\Minimal\TaskNotifyArray.c" />
     <ClCompile Include="..\Common\Minimal\timerdemo.c" />
+    <ClCompile Include="button.c" />
     <ClCompile Include="dbgmain.c" />
     <ClCompile Include="main.c">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -129,6 +130,7 @@
     </ClCompile>
     <ClCompile Include="main_blinky.c" />
     <ClCompile Include="main_full.c" />
+    <ClCompile Include="print.c" />
     <ClCompile Include="Run-time-stats-utils.c" />
   </ItemGroup>
   <ItemGroup>
