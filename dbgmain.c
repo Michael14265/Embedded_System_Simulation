@@ -226,9 +226,21 @@ static void setTextBackgroundColor(int bgColor);
 
 void dbgmain(void)
 {
-
+    
+    /* Initialize System Components */
+    //vTankDataInit();
+    vTimerInit();
+    vDisplaySystemInit();
+    //vFloatInit();
     vButtonSystemInit();
+    //vLevelsSystemInit();
+    //vPrinterSystemInit();
     vHardwareInit();
+    //vOverflowSystemInit();
+
+
+    /* Testing Purposes */
+    xTaskCreate(vDebugTimerTask, "dbtimer", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY_DEBUG_TIMER, NULL);
 
     vTaskStartScheduler();
 
@@ -241,16 +253,15 @@ void vHardwareInit(void) {
     int iColumn, iRow; /* Iterators */
     BYTE byErr; /* May not be necessary, used in micro c semaphore pending function*/
 
-    printf("\r\nHardware Init Function Entered\r\n");
-
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
     xWinSem = xSemaphoreCreateBinary();
+    xSemaphoreGive(xWinSem);
 
     configASSERT(xWinSem != NULL);
 
     /* Start the debugging tasks */
-    xTaskCreate(vDebugTimerTask, "dbtimer", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY_DEBUG_TIMER, NULL);
+    //xTaskCreate(vDebugTimerTask, "dbtimer", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY_DEBUG_TIMER, NULL);
 
     system("cls");
 
@@ -372,10 +383,110 @@ void vHardwareInit(void) {
 /* Called from prvKeyboardInterruptSimulatorTask(), which is defined in main.c. */
 void vSimulationKeyboardInterruptHandler(int xKeyPressed)
 {
+    /* LOCAL VARIABLES */
+    int iColumn = 0, iRow = 0; /* System button activated */
+    BOOL fBtnFound = FALSE; /* TRUE if sys button pressed */
+
+    /* Check if system is currently printing */
+    if (iPrinting)
+    {
+        /* Yes. */
+        --iPrinting;
+        if (iPrinting == 0)
+        {
+            /* We have finished. Call the interrupt routine. */
+            //vPrinterInterrupt();
+        }
+    }
+
+    /* Unblink a button, if necessary. */ // Move to debugTimerTask
+    if (fBtnFound)
+    {
+        xSemaphoreTake(xWinSem, portMAX_DELAY);
+        setTextBackgroundColor(DBG_SCRN_BTN_COLOR);
+        gotoxy(DBG_SCRN_BTN_X + iColumn * DBG_SCRN_BTN_WIDTH,
+            DBG_SCRN_BTN_Y + iRow * DBG_SCRN_BTN_HEIGHT);
+        printf("%s", p_chButtonText[iRow][iColumn]);
+        setTextBackgroundColor(BLACK);
+        xSemaphoreGive(xWinSem);
+        fBtnFound = FALSE;
+    }
+
+    /* If the system set up the floats, cause the float interrupt. */
+    //if (iTankToRead != NO_TANK)
+    //    vFloatInterrupt();
+
+
+
+
     /* Handle keyboard input. */
+    xSemaphoreTake(xWinSem, portMAX_DELAY);
     switch (xKeyPressed)
     {
     case '1':
+        if (!fAutoTime)
+            vTimerOneThirdSecond();
+        break;
+    case 'O':
+    case 'o':
+        fAutoTime = !fAutoTime;
+
+        if (fAutoTime)
+        {
+            gotoxy(15, DBG_SCRN_TIME_ROW + 3);
+            setTextBackgroundColor(GREEN);
+            printf(" ON  ");
+            setTextBackgroundColor(BLACK);
+        }
+        else
+        {
+            gotoxy(15, DBG_SCRN_TIME_ROW + 3);
+            setTextBackgroundColor(RED);
+            printf(" OFF ");
+            setTextBackgroundColor(BLACK);
+        }
+        break;
+    case 't':
+    case 'T':
+    case '2':
+    case '3':
+    case 'R':
+    case 'r':
+    case 'P':
+    case 'p':
+    case 'A':
+    case 'a':
+    case 'H':
+    case 'h':
+        /* Note which button has been pressed. */
+        wButton = toupper(xKeyPressed);
+
+        iRow = 0;
+        fBtnFound = FALSE;
+        while (iRow < BUTTON_ROWS && !fBtnFound)
+        {
+            iColumn = 0;
+            while (iColumn < BUTTON_COLUMNS && !fBtnFound)
+            {
+                if (wButton ==
+                (WORD)a_chButtonKey[iRow][iColumn])
+                    fBtnFound = TRUE;
+                else
+                    ++iColumn;
+            }
+            if (!fBtnFound)
+                ++iRow;
+        }
+
+        /* Blink the button red. */
+        setTextBackgroundColor(DBG_SCRN_BTN_BLINK_COLOR);
+        gotoxy(DBG_SCRN_BTN_X + iColumn * DBG_SCRN_BTN_WIDTH,
+            DBG_SCRN_BTN_Y + iRow * DBG_SCRN_BTN_HEIGHT);
+        printf("%s", p_chButtonText[iRow][iColumn]);
+        setTextBackgroundColor(BLACK);
+
+        /* Fake a button interrupt. */
+        vButtonInterrupt();
         break;
 
     default:
@@ -383,33 +494,7 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
         vButtonInterrupt();
         break;
     }
-}
-
-static void vDebugKeyTask(void* pvParameters){
-
-    /* Prevent the compiler warning about the unused parameter. */
-    (void)pvParameters;
-
-    for (;;) {
-        vTaskDelay(100); // Adjust value later, shouldn't have to be super low since handling keypress elsewhere
-        /* Are we printing a line? */
-        // Checks global variable iPrinting, which checks if the printer is currently in use. Decrements by 1
-        // and when 0 is reached, vPrinterInterrupt is called
-        if (iPrinting)
-        {
-            /* Yes. */
-            --iPrinting;
-            if (iPrinting == 0)
-            {
-                /* We have finished. Call the interrupt routine. */
-                //vPrinterInterrupt(); Implement Later
-            }
-        }
-        // Rest of this function is for the pre-keypress code, implement later, since I'd like to use some keypresses to
-        // test basic functionality first
-
-    }
-
+    xSemaphoreGive(xWinSem);
 }
 
 static void vDebugTimerTask(void* pvParameters){
@@ -417,11 +502,13 @@ static void vDebugTimerTask(void* pvParameters){
     /* Prevent the compiler warning about the unused parameter. */
     (void)pvParameters;
 
+    /* Test Variables */
+    int a_iTime[4];
+
     for (;;) {
-        /*taskENTER_CRITICAL();
-        printf("vDebugTimerTask\r\n");
-        taskEXIT_CRITICAL();*/
-        vTaskDelay(1000);
+        vTaskDelay(185);
+        if (fAutoTime)
+            vTimerOneThirdSecond();
     }
 
 }
@@ -495,12 +582,12 @@ void vHardwareDisplayLine(char* a_chDisp) {
 
     assert(strlen(a_chDisp) <= DBG_SCRN_DISP_WIDTH);
 
-    //xSemaphoreTake(xWinSem, portMAX_DELAY);
+    xSemaphoreTake(xWinSem, portMAX_DELAY);
     gotoxy(DBG_SCRN_DISP_X + 1, DBG_SCRN_DISP_Y + 1);
     printf(" ");
     gotoxy(DBG_SCRN_DISP_X + 1, DBG_SCRN_DISP_Y + 1);
     printf("%s", a_chDisp);
-    //xSemaphoreGive(xWinSem, portMAX_DELAY);
+    xSemaphoreGive(xWinSem, portMAX_DELAY);
 }
 
 WORD wHardwareButtonFetch(void) {
