@@ -43,6 +43,7 @@ void vTankDataInit(void) {
 
     /* Initialize the semaphore that protects the data */
     xSemData = xSemaphoreCreateBinary();
+    xSemaphoreGive(xSemData);
 }
 
 void vTankDataAdd(int iTank, int iLevel) {

@@ -168,6 +168,15 @@ void vDisplayNoPrompt(void) {
 
 void vDisplayLeak(int iTank) {
     assert(iTank >= 0 && iTank < COUNTOF_TANKS);
+    WORD msg = MSG_DISP_LEAK + iTank;
+    xQueueSend(displayQueue, &msg, portMAX_DELAY);
+}
+
+/* This routine is called when an overflow is detected */
+void vDisplayOverflow(int iTank)
+{
+    /* Check that the parameter is valid */
+    assert(iTank >= 0 && iTank < COUNTOF_TANKS);
     WORD msg = MSG_DISP_OFLOW + iTank;
     xQueueSend(displayQueue, &msg, portMAX_DELAY);
 }

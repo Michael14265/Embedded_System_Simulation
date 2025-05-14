@@ -60,7 +60,7 @@ static void vButtonTask(void* pvParameters) {
                         vDisplayTime();
                         break;
                     case 'R':
-                        //vHardwareBellOff();
+                        vHardwareBellOff();
                         vDisplayResetAlarm();
                         break;
 
@@ -74,12 +74,12 @@ static void vButtonTask(void* pvParameters) {
                 {
                 case 'R':
                     iCmdState = CMD_NONE;
-                    //vHardwareBellOff();
-                    //vDisplayResetAlarm();
+                    vHardwareBellOff();
+                    vDisplayResetAlarm();
                     break;
 
                 case 'A':
-                    //vPrintAll();
+                    vPrintAll();
                     iCmdState = CMD_NONE;
                     vDisplayNoPrompt();
                     break;
@@ -96,14 +96,14 @@ static void vButtonTask(void* pvParameters) {
                 {
                 case 'R':
                     iCmdState = CMD_NONE;
-                    //vHardwareBellOff();
-                    //vDisplayResetAlarm();
+                    vHardwareBellOff();
+                    vDisplayResetAlarm();
                     break;
 
                 case '1':
                 case '2':
                 case '3':
-                    //vPrintTankHistory(wMsg - '1');
+                    vPrintTankHistory(wMsg - '1');
                     iCmdState = CMD_NONE;
                     vDisplayNoPrompt();
                     break;

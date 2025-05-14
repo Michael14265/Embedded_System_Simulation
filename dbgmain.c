@@ -218,7 +218,7 @@ static SemaphoreHandle_t xWinSem;
 /* Static Functions */
 static void vUtilityDrawBox(int ixNW, int iyNW, int iXSize, int iYSize);
 static void vUtilityDisplayFloatLevels(void);
-//static void vUtilityPrinterDisplay(void);
+static void vUtilityPrinterDisplay(void);
 static void gotoxy(int x, int y);
 static void setTextBackgroundColor(int bgColor);
 
@@ -231,7 +231,7 @@ void dbgmain(void)
     //vTankDataInit();
     vTimerInit();
     vDisplaySystemInit();
-    //vFloatInit();
+    vFloatInit();
     vButtonSystemInit();
     //vLevelsSystemInit();
     //vPrinterSystemInit();
@@ -387,6 +387,9 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
     int iColumn = 0, iRow = 0; /* System button activated */
     BOOL fBtnFound = FALSE; /* TRUE if sys button pressed */
 
+    // For testing
+    char test[] = "Michael Rules";
+
     /* Check if system is currently printing */
     if (iPrinting)
     {
@@ -426,6 +429,7 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
     case '1':
         if (!fAutoTime)
             vTimerOneThirdSecond();
+        //vHardwarePrinterOutputLine(&test);
         break;
     case 'O':
     case 'o':
@@ -578,6 +582,21 @@ static void vUtilityDisplayFloatLevels(void) {
     }
 }
 
+static void vUtilityPrinterDisplay(void)
+{
+
+    int i, j;  /* Iterators. */
+
+    for (i = 0; i < DBG_SCRN_PRNTR_HEIGHT; ++i)
+    {
+        gotoxy(DBG_SCRN_PRNTR_X + 1, DBG_SCRN_PRNTR_Y + i + 1);
+        for (j = 0; j < DBG_SCRN_PRNTR_WIDTH; ++j)
+            printf(" ");
+        gotoxy(DBG_SCRN_PRNTR_X + 1, DBG_SCRN_PRNTR_Y + i + 1);
+        printf(aa_charPrinted[i]);
+    }
+}
+
 void vHardwareDisplayLine(char* a_chDisp) {
 
     assert(strlen(a_chDisp) <= DBG_SCRN_DISP_WIDTH);
@@ -592,6 +611,86 @@ void vHardwareDisplayLine(char* a_chDisp) {
 
 WORD wHardwareButtonFetch(void) {
     return (toupper(wButton));
+}
+
+void vHardwareFloatSetup(int iTankNumber) {
+
+    /* Check that the parameter is valid. */
+    assert(iTankNumber >= 0 && iTankNumber < COUNTOF_TANKS);
+
+    /* The floats should not be busy. */
+    assert(iTankToRead == NO_TANK);
+
+    /* Remember which tank the system asked about. */
+    iTankToRead = iTankNumber;
+}
+
+int iHardwareFloatGetData(void) {
+
+    int iTankTemp;  /* Temporary tank number. */
+
+    /*-------------------------------------------------------*/
+
+    /* We must have been asked to read something. */
+    assert(iTankToRead >= 0 && iTankToRead < COUNTOF_TANKS);
+
+    /* Remember which tank the system asked about. */
+    iTankTemp = iTankToRead;
+
+    /* We're not reading anymore. */
+    iTankToRead = NO_TANK;
+
+    /* Return the tank reading. */
+    return(a_iTankLevels[iTankTemp]);
+}
+
+void vHardwareBellOn(void) {
+
+    xSemaphoreTake(xWinSem, portMAX_DELAY);
+
+    /* Set the bell color. */
+    setTextBackgroundColor(RED);
+    gotoxy(DBG_SCRN_BELL_X + 1, DBG_SCRN_BELL_Y + 2);
+    printf(" BELL ");
+    setTextBackgroundColor(BLACK);
+
+    xSemaphoreGive(xWinSem);
+}
+
+void vHardwareBellOff(void) {
+
+    xSemaphoreTake(xWinSem, portMAX_DELAY);
+
+    /* Re-draw bell in plain text. */
+    gotoxy(DBG_SCRN_BELL_X + 1, DBG_SCRN_BELL_Y + 2);
+    printf(" BELL ");
+
+    xSemaphoreGive(xWinSem);
+}
+
+void vHardwarePrinterOutputLine(char* a_chPrint)  /* Character string to print */
+{
+
+    /* LOCAL VARIABLES:*/
+    int i;  /* The usual. */
+
+    /*-------------------------------------------------------*/
+
+    /* Check that the length of the string is OK */
+    assert(strlen(a_chPrint) <= DBG_SCRN_PRNTR_WIDTH);
+
+    /* Move all the old lines up. */
+    for (i = 1; i < DBG_SCRN_PRNTR_HEIGHT; ++i)
+        strcpy(aa_charPrinted[i - 1], aa_charPrinted[i]);
+
+    /* Add the new line. */
+    strcpy(aa_charPrinted[DBG_SCRN_PRNTR_HEIGHT - 1], a_chPrint);
+
+    /* Note that we need to interrupt. */
+    iPrinting = 4;
+
+    /* Redraw the printer */
+    vUtilityPrinterDisplay();
 }
 
 static void gotoxy(int x, int y) {

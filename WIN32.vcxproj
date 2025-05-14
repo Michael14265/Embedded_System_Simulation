@@ -110,6 +110,7 @@
     <ClCompile Include="data.c" />
     <ClCompile Include="dbgmain.c" />
     <ClCompile Include="display.c" />
+    <ClCompile Include="floats.c" />
     <ClCompile Include="levels.c" />
     <ClCompile Include="main.c">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -133,6 +134,7 @@
     </ClCompile>
     <ClCompile Include="main_blinky.c" />
     <ClCompile Include="main_full.c" />
+    <ClCompile Include="overflow.c" />
     <ClCompile Include="print.c" />
     <ClCompile Include="Run-time-stats-utils.c" />
     <ClCompile Include="timer.c" />

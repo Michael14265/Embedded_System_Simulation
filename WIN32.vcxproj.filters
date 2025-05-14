@@ -184,6 +184,15 @@
     <ClCompile Include="data.c">
       <Filter>Demo App Source\ExSystem</Filter>
     </ClCompile>
+    <ClCompile Include="floats.c">
+      <Filter>Demo App Source\ExSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="levels.c">
+      <Filter>Demo App Source\ExSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="overflow.c">
+      <Filter>Demo App Source\ExSystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FreeRTOSConfig.h">
