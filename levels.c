@@ -23,6 +23,7 @@ This module deals with calculating the tank levels.
 /* Static Functions */
 /* The function to call when the floats have finished. */
 static void vFloatCallback(int iFloatLevel);
+static void vTestFloatCallback(int iFloatLevel);
 
 /* The task. */
 static void vLevelsTask(void* pvParameters);
@@ -121,5 +122,10 @@ RETURNS: None.
 static void vFloatCallback(int iFloatLevel)
 {
     /* Put that button on the queue for the task. */
-    xQueueSendToBack(QLevelsTask, (void*)(iFloatLevel + MSG_LEVEL_VALUE), 0);
+    WORD msg = iFloatLevel + MSG_LEVEL_VALUE;
+    xQueueSendToBack(QLevelsTask, &msg, portMAX_DELAY);
+}
+
+static void vTestFloatCallback(int iFloatLevel) {
+    printf("Test Float Call Back, Float Level = %d\n", iFloatLevel);
 }

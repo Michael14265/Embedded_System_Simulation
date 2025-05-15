@@ -1,3 +1,11 @@
+/*************************************************************
+
+                         BUTTON.C
+
+This module deals with the buttons.
+
+*************************************************************/
+
 /* Standard includes. */
 #include <stdio.h>
 #include <conio.h>

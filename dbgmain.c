@@ -203,17 +203,10 @@ static int iTankChanging = 0;
 /* Is time passing automatically? */
 static BOOL fAutoTime = FALSE;
 
-/* Tasks and stacks for debugging */
-#define STK_SIZE 1024
-UWORD DebugKeyStk[STK_SIZE];
-UWORD DebugTimerStk[STK_SIZE];
-
 static void vDebugKeyTask(void* data);
 static void vDebugTimerTask(void* data);
 static SemaphoreHandle_t xWinSem;
 
-/* Place to store DOS timer interrupt vector. */
-//static void interrupt far(*OldTickISR)(void);
 
 /* Static Functions */
 static void vUtilityDrawBox(int ixNW, int iyNW, int iXSize, int iYSize);
@@ -228,19 +221,15 @@ void dbgmain(void)
 {
     
     /* Initialize System Components */
-    //vTankDataInit();
+    vTankDataInit();
     vTimerInit();
     vDisplaySystemInit();
     vFloatInit();
     vButtonSystemInit();
-    //vLevelsSystemInit();
-    //vPrinterSystemInit();
+    vLevelsSystemInit();
+    vPrinterSystemInit();
     vHardwareInit();
-    //vOverflowSystemInit();
-
-
-    /* Testing Purposes */
-    xTaskCreate(vDebugTimerTask, "dbtimer", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY_DEBUG_TIMER, NULL);
+    vOverflowSystemInit();
 
     vTaskStartScheduler();
 
@@ -261,7 +250,7 @@ void vHardwareInit(void) {
     configASSERT(xWinSem != NULL);
 
     /* Start the debugging tasks */
-    //xTaskCreate(vDebugTimerTask, "dbtimer", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY_DEBUG_TIMER, NULL);
+    xTaskCreate(vDebugTimerTask, "dbtimer", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY_DEBUG_TIMER, NULL);
 
     system("cls");
 
@@ -390,18 +379,6 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
     // For testing
     char test[] = "Michael Rules";
 
-    /* Check if system is currently printing */
-    if (iPrinting)
-    {
-        /* Yes. */
-        --iPrinting;
-        if (iPrinting == 0)
-        {
-            /* We have finished. Call the interrupt routine. */
-            //vPrinterInterrupt();
-        }
-    }
-
     /* Unblink a button, if necessary. */ // Move to debugTimerTask
     if (fBtnFound)
     {
@@ -416,11 +393,8 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
     }
 
     /* If the system set up the floats, cause the float interrupt. */
-    //if (iTankToRead != NO_TANK)
-    //    vFloatInterrupt();
-
-
-
+    if (iTankToRead != NO_TANK)
+        vFloatInterrupt();
 
     /* Handle keyboard input. */
     xSemaphoreTake(xWinSem, portMAX_DELAY);
@@ -429,7 +403,6 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
     case '1':
         if (!fAutoTime)
             vTimerOneThirdSecond();
-        //vHardwarePrinterOutputLine(&test);
         break;
     case 'O':
     case 'o':
@@ -493,10 +466,44 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
         vButtonInterrupt();
         break;
 
-    default:
-        wButton = toupper(xKeyPressed);
-        vButtonInterrupt();
+    case '-':
+        /* Reduce the level in the current tank. */
+        a_iTankLevels[iTankChanging] -= 80;
+        if (a_iTankLevels[iTankChanging] < 0)
+            a_iTankLevels[iTankChanging] = 0;
+        vUtilityDisplayFloatLevels();
         break;
+
+    case '+':
+        /* Increase the level in the current tank. */
+        a_iTankLevels[iTankChanging] += 80;
+        if (a_iTankLevels[iTankChanging] > 8000)
+            a_iTankLevels[iTankChanging] = 8000;
+        vUtilityDisplayFloatLevels();
+        break;
+
+    case 'x':
+    case 'X':
+        /* End the program. */
+        exit(0);
+        break;
+
+    case '>':
+        /* Choose a different tank to modify */
+        ++iTankChanging;
+        if (iTankChanging == COUNTOF_TANKS)
+            iTankChanging = COUNTOF_TANKS - 1;
+        vUtilityDisplayFloatLevels();
+        break;
+
+    case '<':
+        /* Choose a different tank to modify */
+        --iTankChanging;
+        if (iTankChanging < 0)
+            iTankChanging = 0;
+        vUtilityDisplayFloatLevels();
+        break;
+
     }
     xSemaphoreGive(xWinSem);
 }
@@ -511,6 +518,19 @@ static void vDebugTimerTask(void* pvParameters){
 
     for (;;) {
         vTaskDelay(185);
+
+        /* Check if system is currently printing */
+        if (iPrinting)
+        {
+            /* Yes. */
+            --iPrinting;
+            if (iPrinting == 0)
+            {
+                /* We have finished. Call the interrupt routine. */
+                vPrinterInterrupt();
+            }
+        }
+
         if (fAutoTime)
             vTimerOneThirdSecond();
     }
@@ -628,8 +648,6 @@ void vHardwareFloatSetup(int iTankNumber) {
 int iHardwareFloatGetData(void) {
 
     int iTankTemp;  /* Temporary tank number. */
-
-    /*-------------------------------------------------------*/
 
     /* We must have been asked to read something. */
     assert(iTankToRead >= 0 && iTankToRead < COUNTOF_TANKS);

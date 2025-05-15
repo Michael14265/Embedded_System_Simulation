@@ -1,3 +1,11 @@
+/*************************************************************
+
+                         DATA.C
+
+This module stores the tank data.
+
+*************************************************************/
+
 /* Standard includes. */
 #include <stdio.h>
 #include <conio.h>

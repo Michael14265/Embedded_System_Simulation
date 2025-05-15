@@ -58,6 +58,8 @@ void vFloatInterrupt(void)
     xSemaphoreGive(xSemFloat);
 
     /* Call back the callback routine. */
+    //printf("should be called after");
+
     vFloatCallbackTemp(iFloatLevel);
 }
 

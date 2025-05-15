@@ -1,3 +1,8 @@
+/****************************************************
+                          TIMER.C
+This module provides timing services.
+****************************************************/
+
 /* Standard includes. */
 #include <stdio.h>
 #include <conio.h>

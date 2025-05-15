@@ -1,3 +1,11 @@
+/*************************************************************
+
+                         DISPLAY.C
+
+This module deals with the Tank Monitor Display.
+
+*************************************************************/
+
 /* Standard includes. */
 #include <stdio.h>
 #include <conio.h>
