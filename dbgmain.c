@@ -188,6 +188,11 @@ static char aa_charPrinted
 /* Printing a line now. */
 static int iPrinting = 0;
 
+/* Boolean that tracks if a button has been pressed */
+static BOOL fBtnFound = FALSE;
+static int iLastBtnRow = -1;
+static int iLastBtnCol = -1;
+
 /* Debug variables for reading the tank levels. */
 /* Float levels. */
 static int a_iTankLevels[COUNTOF_TANKS] =
@@ -219,7 +224,6 @@ static void setTextBackgroundColor(int bgColor);
 
 void dbgmain(void)
 {
-    
     /* Initialize System Components */
     vTankDataInit();
     vTimerInit();
@@ -231,9 +235,10 @@ void dbgmain(void)
     vHardwareInit();
     vOverflowSystemInit();
 
+    /* Start OS */
     vTaskStartScheduler();
 
-    for (;; );
+    for (;;);
 }
 
 
@@ -372,26 +377,6 @@ void vHardwareInit(void) {
 /* Called from prvKeyboardInterruptSimulatorTask(), which is defined in main.c. */
 void vSimulationKeyboardInterruptHandler(int xKeyPressed)
 {
-    /* LOCAL VARIABLES */
-    int iColumn = 0, iRow = 0; /* System button activated */
-    BOOL fBtnFound = FALSE; /* TRUE if sys button pressed */
-
-    // For testing
-    char test[] = "Michael Rules";
-
-    /* Unblink a button, if necessary. */ // Move to debugTimerTask
-    if (fBtnFound)
-    {
-        xSemaphoreTake(xWinSem, portMAX_DELAY);
-        setTextBackgroundColor(DBG_SCRN_BTN_COLOR);
-        gotoxy(DBG_SCRN_BTN_X + iColumn * DBG_SCRN_BTN_WIDTH,
-            DBG_SCRN_BTN_Y + iRow * DBG_SCRN_BTN_HEIGHT);
-        printf("%s", p_chButtonText[iRow][iColumn]);
-        setTextBackgroundColor(BLACK);
-        xSemaphoreGive(xWinSem);
-        fBtnFound = FALSE;
-    }
-
     /* If the system set up the floats, cause the float interrupt. */
     if (iTankToRead != NO_TANK)
         vFloatInterrupt();
@@ -436,31 +421,36 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
     case 'H':
     case 'h':
         /* Note which button has been pressed. */
+
         wButton = toupper(xKeyPressed);
 
-        iRow = 0;
+        taskENTER_CRITICAL();
+        iLastBtnRow = 0;
         fBtnFound = FALSE;
-        while (iRow < BUTTON_ROWS && !fBtnFound)
+        while (iLastBtnRow < BUTTON_ROWS && !fBtnFound)
         {
-            iColumn = 0;
-            while (iColumn < BUTTON_COLUMNS && !fBtnFound)
+            iLastBtnCol = 0;
+            while (iLastBtnCol < BUTTON_COLUMNS && !fBtnFound)
             {
                 if (wButton ==
-                (WORD)a_chButtonKey[iRow][iColumn])
+                (WORD)a_chButtonKey[iLastBtnRow][iLastBtnCol])
                     fBtnFound = TRUE;
                 else
-                    ++iColumn;
+                    ++iLastBtnCol;
             }
             if (!fBtnFound)
-                ++iRow;
+                ++iLastBtnRow;
         }
 
+        
         /* Blink the button red. */
         setTextBackgroundColor(DBG_SCRN_BTN_BLINK_COLOR);
-        gotoxy(DBG_SCRN_BTN_X + iColumn * DBG_SCRN_BTN_WIDTH,
-            DBG_SCRN_BTN_Y + iRow * DBG_SCRN_BTN_HEIGHT);
-        printf("%s", p_chButtonText[iRow][iColumn]);
+        gotoxy(DBG_SCRN_BTN_X + iLastBtnCol * DBG_SCRN_BTN_WIDTH,
+            DBG_SCRN_BTN_Y + iLastBtnRow * DBG_SCRN_BTN_HEIGHT);
+        printf("%s", p_chButtonText[iLastBtnRow][iLastBtnCol]);
         setTextBackgroundColor(BLACK);
+
+        taskEXIT_CRITICAL();
 
         /* Fake a button interrupt. */
         vButtonInterrupt();
@@ -518,6 +508,23 @@ static void vDebugTimerTask(void* pvParameters){
 
     for (;;) {
         vTaskDelay(185);
+
+        /* Unblink a button, if necessary. */ // Move to debugTimerTask
+        taskENTER_CRITICAL();
+
+        if (fBtnFound)
+        {
+            xSemaphoreTake(xWinSem, portMAX_DELAY);
+            setTextBackgroundColor(DBG_SCRN_BTN_COLOR);
+            gotoxy(DBG_SCRN_BTN_X + iLastBtnCol * DBG_SCRN_BTN_WIDTH,
+                DBG_SCRN_BTN_Y + iLastBtnRow * DBG_SCRN_BTN_HEIGHT);
+            printf("%s", p_chButtonText[iLastBtnRow][iLastBtnCol]);
+            setTextBackgroundColor(BLACK);
+            xSemaphoreGive(xWinSem);
+            fBtnFound = FALSE;
+        }
+
+        taskEXIT_CRITICAL();
 
         /* Check if system is currently printing */
         if (iPrinting)

@@ -65,6 +65,8 @@ static void vButtonTask(void* pvParameters) {
                         break;
 
                     case 'T':
+                        //printf("Reached button task");
+                        //while (TRUE);
                         vDisplayTime();
                         break;
                     case 'R':
@@ -137,6 +139,8 @@ static char* p_chPromptStrings[] =
 };
 
 char* p_chGetCommandPrompt(int iPrompt) {
+
+    
     assert(iPrompt >= 0 && iPrompt < sizeof(p_chPromptStrings) / sizeof(char*));
 
     return (p_chPromptStrings[iPrompt]);

@@ -12,7 +12,7 @@ This module deals with calculating the tank levels.
 /* Kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
-#include "timers.h"
+#include "timers.h"x
 #include "semphr.h"
 #include "publics.h"
 #include "assert.h"
@@ -89,7 +89,7 @@ static void vLevelsTask(void* pvParameters)
 
         /* Now that the "calculation" is done, assume that
            the number of gallons equals the float level. */
-        vTankDataAdd(iTank, wFloatLevel);
+        vTankDataAdd(iTank, wFloatLevel - 1);
 
         /* Now test for leaks (very simplistically). */
         if (iTankDataGet(iTank, a_iLevels, NULL, 3) == 3)

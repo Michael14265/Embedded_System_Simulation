@@ -71,13 +71,20 @@ static void vDisplayTask(void* pvParameters) {
 
     while (TRUE) {
         xQueueReceive(displayQueue, &wMsg, portMAX_DELAY);
+        //printf("msg: %d ", wMsg);
 
         if (wMsg & MSG_USER_REQUEST)
         {
-            if (wMsg & MSG_USER_REQUEST & MSG_DISP_PROMPT)
+            //if (wMsg & MSG_USER_REQUEST & MSG_DISP_PROMPT)
+            if ((wMsg & (MSG_USER_REQUEST | MSG_DISP_PROMPT)) == MSG_DISP_PROMPT)
             {
                 /* Store the prompt we’ve been asked to display */
-                iPrompt = wMsg & MSG_DISP_PROMPT;
+                //iPrompt = !wMsg & !MSG_DISP_PROMPT; // change to wMsg && 0x000F or something similar to extract lower x bits
+                iPrompt = wMsg & 0x0001;
+                //printf("%d %d %d", iPrompt, wMsg, MSG_DISP_PROMPT);
+                //printf("pr: %d ", iPrompt);
+                //while (TRUE);
+
             }
             else
             {
@@ -105,6 +112,10 @@ static void vDisplayTask(void* pvParameters) {
         {
             iPrompt = -1;
         }
+        //printf("%d", iPrompt);
+        //if (wUserRequest == MSG_DISP_TIME)
+        //    printf("MSG_DISP_TIME");
+        //while (TRUE);
 
         /* ELSE it’s an update message */
         /* Now do the display */
@@ -118,16 +129,19 @@ static void vDisplayTask(void* pvParameters) {
             /* A tank is leaking. */
             sprintf(a_chDisp, "Tank %d: LEAKING!!", iTankLeaking + 1);
         }
-        else if (iPrompt > 0)
+        else if (iPrompt >= 0)
         {
+            //while (TRUE);
             sprintf(a_chDisp, p_chGetCommandPrompt(iPrompt));
         }
         else if (wUserRequest == MSG_DISP_TIME)
         {
             /* Display the time */
             vTimeGet(a_iTime);
-            sprintf(a_chDisp, "%02d:%02d:%02d",
+            sprintf(a_chDisp, "%02d:%02d:%02d           ",
                 a_iTime[0], a_iTime[1], a_iTime[2]);
+            //printf("%d", iPrompt);
+            //while (TRUE);
         }
         else
         {
@@ -143,7 +157,10 @@ static void vDisplayTask(void* pvParameters) {
                 sprintf(a_chDisp, "Tank %d: N/A.", wUserRequest - MSG_DISP_TANK + 1);
             }
         }
+     
         vHardwareDisplayLine(a_chDisp);
+        //printf("vHardwareDisplayLine working");
+        //while (TRUE);
     }
 }
 
@@ -166,6 +183,8 @@ void vDisplayTime(void) {
 void vDisplayPrompt(int iPrompt) {
     assert(iPrompt < 0x400);
     WORD msg = MSG_DISP_PROMPT + iPrompt;
+    //printf("%d %d", iPrompt, MSG_DISP_PROMPT);
+    //while (TRUE);
     xQueueSend(displayQueue, &msg, portMAX_DELAY);
 }
 

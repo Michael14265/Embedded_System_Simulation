@@ -80,6 +80,9 @@ static void vPrinterTask(void* pvParameters)
         /* Wait for a message */
         xQueueReceive(QPrinterTask, &wMsg, portMAX_DELAY);
 
+        //printf("func reached working");
+        //while (TRUE);
+
         if (wMsg == MSG_PRINT_ALL)
         {
             /* Format 'all' report */
@@ -91,11 +94,16 @@ static void vPrinterTask(void* pvParameters)
 
             for (iTank = 0; iTank < COUNTOF_TANKS; ++iTank)
             {
+                //printf("%d %d", iTank, COUNTOF_TANKS);
                 if (iTankDataGet(iTank, a_iLevel, NULL, 1) == 1)
                 {
                     /* We have data for this tank; display it */
                     sprintf(a_chPrint[iLinesTotal++],
                         "Tank %d: %d gls.", iTank + 1, a_iLevel[0]);
+                }
+                else {
+                    sprintf(a_chPrint[iLinesTotal++],
+                        "No Data");
                 }
             }
             sprintf(a_chPrint[iLinesTotal++], "----------------");

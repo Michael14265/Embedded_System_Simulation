@@ -81,6 +81,8 @@ int iTankDataGet(int iTank, int* a_iLevels, int** aa_iTimes, int iLimit) {
     int iReturn;
     int iIndex;
 
+    //printf("iTank: %d", iTank);
+
     assert(iTank >= 0 && iTank < COUNTOF_TANKS);
     assert(a_iLevels != NULL);
     assert(iLimit > 0);
