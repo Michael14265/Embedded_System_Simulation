@@ -208,8 +208,8 @@ static int iTankChanging = 0;
 /* Is time passing automatically? */
 static BOOL fAutoTime = FALSE;
 
-static void vDebugKeyTask(void* data);
-static void vDebugTimerTask(void* data);
+static void vDebugAdditionalTasks(void* pvParameters);
+static void vDebugTimerTask(void* pvParameters);
 static SemaphoreHandle_t xWinSem;
 
 
@@ -219,6 +219,7 @@ static void vUtilityDisplayFloatLevels(void);
 static void vUtilityPrinterDisplay(void);
 static void gotoxy(int x, int y);
 static void setTextBackgroundColor(int bgColor);
+static void hideCursor(void);
 
 /*-----------------------------------------------------------*/
 
@@ -256,8 +257,10 @@ void vHardwareInit(void) {
 
     /* Start the debugging tasks */
     xTaskCreate(vDebugTimerTask, "dbtimer", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY_DEBUG_TIMER, NULL);
+    //xTaskCreate(vDebugAdditionalTasks, "dbtasks", configMINIMAL_STACK_SIZE, NULL, TASK_PRIORITY_DEBUG_ADD, NULL);
 
     system("cls");
+    hideCursor();
 
     /* Divide the screen */
     for (iRow = 1; iRow <= 25; ++iRow) // iterates through # rows
@@ -293,7 +296,7 @@ void vHardwareInit(void) {
     printf("TIME:");
 
     gotoxy(1, DBG_SCRN_TIME_ROW);
-    printf(" '1' to make 1/3 second pass");
+    printf(" '/' to make 1/3 second pass");
 
     gotoxy(1, DBG_SCRN_TIME_ROW + 1);
     printf(" 'O' to toggle auto timer");
@@ -377,6 +380,7 @@ void vHardwareInit(void) {
 /* Called from prvKeyboardInterruptSimulatorTask(), which is defined in main.c. */
 void vSimulationKeyboardInterruptHandler(int xKeyPressed)
 {
+
     /* If the system set up the floats, cause the float interrupt. */
     if (iTankToRead != NO_TANK)
         vFloatInterrupt();
@@ -385,7 +389,7 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
     xSemaphoreTake(xWinSem, portMAX_DELAY);
     switch (xKeyPressed)
     {
-    case '1':
+    case '/':
         if (!fAutoTime)
             vTimerOneThirdSecond();
         break;
@@ -410,6 +414,7 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
         break;
     case 't':
     case 'T':
+    case '1':
     case '2':
     case '3':
     case 'R':
@@ -441,7 +446,6 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
             if (!fBtnFound)
                 ++iLastBtnRow;
         }
-
         
         /* Blink the button red. */
         setTextBackgroundColor(DBG_SCRN_BTN_BLINK_COLOR);
@@ -498,7 +502,7 @@ void vSimulationKeyboardInterruptHandler(int xKeyPressed)
     xSemaphoreGive(xWinSem);
 }
 
-static void vDebugTimerTask(void* pvParameters){
+static void vDebugTimerTask(void* pvParameters) {
 
     /* Prevent the compiler warning about the unused parameter. */
     (void)pvParameters;
@@ -543,6 +547,52 @@ static void vDebugTimerTask(void* pvParameters){
     }
 
 }
+
+
+//static void vDebugAdditionalTasks(void* pvParameters) {
+//    /* Prevent the compiler warning about the unused parameter. */
+//    (void)pvParameters;
+//
+//    for (;;) {
+//
+//        vTaskDelay(250);
+//
+//        /* Check if system is currently printing */
+//        if (iPrinting)
+//        {
+//            /* Yes. */
+//            --iPrinting;
+//            if (iPrinting == 0)
+//            {
+//                /* We have finished. Call the interrupt routine. */
+//                vPrinterInterrupt();
+//            }
+//        }
+//
+//        /* Unblink a button, if necessary. */ // Move to debugTimerTask
+//        taskENTER_CRITICAL();
+//
+//        if (fBtnFound)
+//        {
+//            xSemaphoreTake(xWinSem, portMAX_DELAY);
+//            setTextBackgroundColor(DBG_SCRN_BTN_COLOR);
+//            gotoxy(DBG_SCRN_BTN_X + iLastBtnCol * DBG_SCRN_BTN_WIDTH,
+//                DBG_SCRN_BTN_Y + iLastBtnRow * DBG_SCRN_BTN_HEIGHT);
+//            printf("%s", p_chButtonText[iLastBtnRow][iLastBtnCol]);
+//            setTextBackgroundColor(BLACK);
+//            xSemaphoreGive(xWinSem);
+//            fBtnFound = FALSE;
+//        }
+//
+//        taskEXIT_CRITICAL();
+//
+//        /* If the system set up the floats, cause the float interrupt. */
+//        if (iTankToRead != NO_TANK)
+//            vFloatInterrupt();
+//    }
+//
+//}
+
 
 /***** vUtilityDrawBox **********************************************
 
@@ -733,5 +783,14 @@ static void setTextBackgroundColor(int bgColor) {
     // Mask out the old background color and apply the new one
     WORD newAttributes = (currentAttributes & 0x0F) | (bgColor << 4);
     SetConsoleTextAttribute(hConsole, newAttributes);
+}
+
+static void hideCursor() {
+
+    CONSOLE_CURSOR_INFO cursorInfo;
+
+    GetConsoleCursorInfo(hConsole, &cursorInfo);
+    cursorInfo.bVisible = FALSE;  // Set the cursor visibility to false
+    SetConsoleCursorInfo(hConsole, &cursorInfo);
 }
 

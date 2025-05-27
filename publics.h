@@ -12,7 +12,7 @@ for the modules.
 
 /* The priorities of the various tasks */
 #define TASK_PRIORITY_DEBUG_TIMER  6
-#define TASK_PRIORITY_DEBUG_KEY    7
+#define TASK_PRIORITY_DEBUG_ADD    7
 #define TASK_PRIORITY_BUTTON      10
 #define TASK_PRIORITY_DISPLAY     11
 #define TASK_PRIORITY_OVERFLOW    13
