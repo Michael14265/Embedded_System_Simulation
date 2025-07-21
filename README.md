@@ -3,7 +3,7 @@ This codebase contains a simulation of an embedded control system for an undergr
 
 The book places strong emphasis on the role of Real-Time Operating Systems (RTOS) in embedded applications, covering critical concepts such as task structuring, mutexes, interrupt handling, and overall system architecture.
 
-The original implementation was designed for a DOS-based environment using the µC/OS RTOS. However, running the original setup would have required a DOS virtual machine. Instead, I chose to port the project to a Windows environment using FreeRTOS. This decision not only made the system more accessible but also served as excellent practice in adapting and modernizing embedded software.
+The original implementation was designed for a DOS-based environment using the µC/OS RTOS. However, running the original setup would have required a DOS virtual machine. Instead, I chose to port the project to a Windows environment using FreeRTOS, knowing that this would give me the opportunity to learn FreeRTOS while forcing me to become intensely familiar with the codebase.
 
 Working on this project has been instrumental in deepening my understanding of RTOS fundamentals and embedded system design. It highlighted the interrupt-driven nature of many embedded systems and taught me how to design efficient ISRs (Interrupt Service Routines) that remain lightweight. I also gained hands-on experience using queues to delegate compute-intensive work to background tasks, a common and essential pattern in real-time system design.
 
@@ -15,6 +15,6 @@ The project is structured using a modular design, with supporting files like but
 
 * dbgmain.c simulates hardware-level behavior by generating software-triggered interrupts (e.g., simulating a button press).
 
-* button.c contains the corresponding logic that would run in response to those interrupts, such as toggling actuator states or sending messages to other system tasks.
+* button.c contains the corresponding logic that would run in response to those interrupts.
 
 This separation of concerns improves code maintainability and aligns with best practices in embedded software design—where ISRs handle only lightweight tasks and delegate heavier processing to background tasks or dedicated modules.
